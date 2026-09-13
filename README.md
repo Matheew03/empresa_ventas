@@ -13,5 +13,5 @@ Asegúrate de tener instalado [Node.js](https://nodejs.org/) en tu computadora.
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone [https://github.com/Matheew03/TU_NUEVO_REPOSITORIO.git](https://github.com/Matheew03/TU_NUEVO_REPOSITORIO.git)
+   git clone [https://github.com/Matheew03/empresa_ventas.git](https://github.com/Matheew03/empresa_ventas.git)
    cd sistema-ventas-web
