@@ -1,0 +1,200 @@
+<div class="app-shell">
+
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="header-icon">📦</span>
+      <div>
+        <h1 class="header-title">SalesFlow Pro</h1>
+        <p class="header-subtitle">Sistema de Ventas e Inventario</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span class="header-badge">v2.5.0</span>
+      <span class="header-user">👤 Administrador</span>
+    </div>
+  </header>
+
+
+  <main class="main-content">
+
+
+    <section class="section">
+      <h2 class="section-title">
+        <span class="section-icon"></span> Resumen General
+      </h2>
+
+      <div class="stats-grid">
+        <div class="stat-card stat-card--blue">
+          <div class="stat-icon"></div>
+          <div class="stat-body">
+            <span class="stat-value">{{ stats().total }}</span>
+            <span class="stat-label">Productos</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-card--green">
+          <div class="stat-icon"></div>
+          <div class="stat-body">
+            <span class="stat-value">{{ stats().inventoryValue | currency:'USD':'symbol':'1.0-0' }}</span>
+            <span class="stat-label">Valor en Inventario</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-card--orange">
+          <div class="stat-icon"></div>
+          <div class="stat-body">
+            <span class="stat-value">{{ stats().lowStock }}</span>
+            <span class="stat-label">Stock Bajo</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-card--red">
+          <div class="stat-icon">🚫</div>
+          <div class="stat-body">
+            <span class="stat-value">{{ stats().outOfStock }}</span>
+            <span class="stat-label">Agotados</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-icon">🛍️</span> Catalogo de Productos
+        </h2>
+        <p class="section-desc">Edita precios o ajusta el stock. Los cambios de precio quedan registrados
+          automaticamente en la auditoria.</p>
+      </div>
+
+
+      <div class="category-filter">
+        @for (cat of categories; track cat) {
+        <button class="filter-btn" [class.filter-btn--active]="selectedCategory() === cat"
+          (click)="selectedCategory.set(cat)">
+          {{ cat }}
+        </button>
+        }
+      </div>
+
+
+      <div class="products-grid">
+        @for (product of filteredCatalog(); track product.id) {
+        <div class="product-card" [class]="'product-card--' + product.stockStatus">
+
+
+          <div class="product-card__header">
+            <img [src]="product.imageUrl" [alt]="product.name" class="product-img" />
+            <div class="product-info">
+              <h3 class="product-name">{{ product.name }}</h3>
+              <span class="product-sku">{{ product.sku }}</span>
+              <span class="product-category">{{ product.category }}</span>
+            </div>
+            <span class="stock-badge" [class]="'stock-badge--' + product.stockStatus">
+              {{ getStockLabel(product.stockStatus) }}
+            </span>
+          </div>
+
+
+          <p class="product-desc">{{ product.description }}</p>
+
+
+          <div class="product-data-row">
+            <div class="data-item">
+              <span class="data-label">Stock actual</span>
+              <div class="stock-controls">
+                <button class="stock-btn" (click)="adjustStock(product.id, -1)">−</button>
+                <span class="stock-value">{{ product.stock }}</span>
+                <button class="stock-btn" (click)="adjustStock(product.id, 1)">+</button>
+              </div>
+            </div>
+
+            <div class="data-item">
+              <span class="data-label">Precio unitario</span>
+              @if (isEditing(product.id)) {
+
+              <div class="edit-price-row">
+                <input type="number" class="price-input" [(ngModel)]="editingPrice" min="0" step="0.01" />
+                <button class="btn btn--save" (click)="confirmEdit(product.id)">✓</button>
+                <button class="btn btn--cancel" (click)="cancelEdit()">✕</button>
+              </div>
+              } @else {
+
+              <div class="price-display">
+                <span class="price-value">{{ product.price | currency }}</span>
+                <button class="btn btn--edit" (click)="startEdit(product)">✏️ Editar</button>
+              </div>
+              }
+            </div>
+          </div>
+
+        </div>
+        }
+      </div>
+    </section>
+
+
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-icon">Buscar</span> Historial de Auditoria de Precios
+        </h2>
+        <p class="section-desc">Registro en tiempo real de todos los cambios de precio. Cada edicion activa
+          automaticamente el trigger de auditoria.</p>
+      </div>
+
+      @if (auditLog().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon">📋</span>
+        <p class="empty-title">Sin registros aun</p>
+        <p class="empty-desc">Edita el precio de cualquier producto para ver el registro de auditoria aqui.</p>
+      </div>
+      } @else {
+
+      <div class="audit-table-wrapper">
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Producto</th>
+              <th>SKU</th>
+              <th>Precio Anterior</th>
+              <th>Precio Nuevo</th>
+              <th>Variacion</th>
+              <th>Fecha y Hora</th>
+              <th>Modificado por</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of auditLog(); track record.id) {
+            <tr class="audit-row audit-row--new">
+              <td class="td--id">{{ record.id }}</td>
+              <td class="td--product">{{ record.productName }}</td>
+              <td><span class="sku-tag">{{ record.sku }}</span></td>
+              <td class="td--price old-price">{{ record.oldPrice | currency }}</td>
+              <td class="td--price new-price">{{ record.newPrice | currency }}</td>
+              <td>
+                <span class="change-badge" [class.change-badge--up]="record.percentChange > 0"
+                  [class.change-badge--down]="record.percentChange < 0">
+                  {{ record.percentChange > 0 ? '▲' : '▼' }}
+                  {{ record.percentChange | number:'1.1-1' }}%
+                </span>
+              </td>
+              <td class="td--date">{{ record.changedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+              <td class="td--user">{{ record.changedBy }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>SalesFlow Pro &copy; 2025 &mdash; Sistema Corporativo de Ventas e Inventario</p>
+  </footer>
+
+</div>
